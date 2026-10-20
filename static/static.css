@@ -1,0 +1,113 @@
+:root:not([data-theme="x"]) {
+    color-scheme: light;
+    --pico-primary: #2f80d6;
+    --pico-primary-background: #2f80d6;
+    --pico-primary-border: #2f80d6;
+    --pico-primary-hover: #1f68b8;
+    --pico-primary-hover-background: #1f68b8;
+    --pico-primary-hover-border: #1f68b8;
+    --pico-primary-focus: rgba(47, 128, 214, 0.25);
+    --pico-primary-inverse: #fff;
+    --pico-secondary: #f08a2e;
+    --pico-secondary-background: #f08a2e;
+    --pico-secondary-border: #f08a2e;
+    --pico-secondary-hover: #d8721a;
+    --pico-secondary-hover-background: #d8721a;
+    --pico-secondary-hover-border: #d8721a;
+    --pico-secondary-focus: rgba(240, 138, 46, 0.3);
+    --pico-secondary-inverse: #fff;
+    --pico-background-color: #e3f0fc;
+    --pico-color: #1b3a5c;
+    --pico-muted-color: #5f7c99;
+    --pico-muted-border-color: #c9defa;
+    --pico-card-background-color: #fff;
+    --pico-card-border-color: #cfe2f6;
+    --pico-form-element-background-color: #fff;
+    --pico-form-element-border-color: #b5d1ee;
+    --pico-form-element-active-border-color: #2f80d6;
+    --pico-form-element-focus-color: rgba(47, 128, 214, 0.25);
+    --pico-border-radius: 1.5rem;
+    --pico-font-family: "Nunito", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+}
+
+html {
+    min-height: 100%;
+    background: linear-gradient(180deg, #2f80d6 0, #2f80d6 0.6rem, transparent 0.6rem),
+                linear-gradient(160deg, #eaf4ff 0%, #cfe5fa 100%);
+    background-attachment: fixed;
+}
+body { min-height: 100vh; background: transparent; color: var(--pico-color); }
+
+main.container {
+    max-width: 62rem;
+    margin-top: clamp(2rem, 6vh, 4rem);
+    margin-bottom: 4rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background: #fff;
+    border: 2px solid #cfe2f6;
+    border-radius: 2rem;
+    box-shadow: 0 1rem 2.5rem rgba(47, 128, 214, 0.18);
+}
+
+h1, h2, h3, h4, h5, h6 { color: #1b4f8a; font-weight: 800; }
+h1 { margin-bottom: 1.5rem; }
+h1::after {
+    display: block; width: 4rem; height: 0.3rem; margin-top: 0.7rem;
+    border-radius: 1rem; background: #f08a2e; content: "";
+}
+
+a:not([role="button"]) { color: #2f80d6; font-weight: 600; }
+a:not([role="button"]):hover { color: #d8721a; }
+
+a[role="button"], button {
+    border-radius: 999px;
+    font-weight: 700;
+    padding-inline: 1.6rem;
+    box-shadow: 0 0.3rem 0 rgba(27, 79, 138, 0.25);
+    transition: transform 140ms ease, box-shadow 140ms ease;
+}
+a[role="button"]:hover, button:hover { transform: translateY(-2px); box-shadow: 0 0.5rem 0 rgba(27, 79, 138, 0.25); }
+a[role="button"]:active, button:active { transform: translateY(1px); box-shadow: 0 0.1rem 0 rgba(27, 79, 138, 0.25); }
+
+button.secondary, a[role="button"].secondary {
+    background: #fff; color: #d8721a; border: 2px solid #f08a2e;
+    --pico-color: #d8721a;
+}
+button.secondary:hover, a[role="button"].secondary:hover { background: #fff3e6; color: #b95a10; border-color: #d8721a; }
+a[role="button"].outline, button.outline { background: transparent; }
+
+input, select, textarea { border-radius: 999px; padding-inline: 1.2rem; }
+textarea { border-radius: 1.2rem; }
+
+fieldset, article {
+    border: 2px solid #cfe2f6; border-radius: 1.4rem;
+    box-shadow: 0 0.4rem 1rem rgba(47, 128, 214, 0.08);
+}
+fieldset { margin-bottom: 1.25rem; padding: 1.25rem; background: #f1f8ff; }
+fieldset legend { color: #2f80d6; font-weight: 800; }
+
+#display, h2#display {
+    font-size: clamp(3rem, 10vw, 5rem);
+    font-weight: 800; color: #f08a2e;
+    font-variant-numeric: tabular-nums; text-align: center;
+    margin: 1rem 0 1.5rem;
+}
+
+table {
+    overflow: hidden; border: 2px solid #cfe2f6; border-radius: 1.2rem;
+    border-collapse: separate; border-spacing: 0;
+}
+thead th { background: #2f80d6; color: #fff; border-bottom: 0; }
+tbody tr:nth-child(even) { background: #f1f8ff; }
+
+dialog article { border-top: 0.4rem solid #f08a2e; }
+footer { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+footer form { margin-bottom: 0; }
+
+@media (max-width: 600px) {
+    main.container { margin-top: 1rem; padding: 1.25rem; border-radius: 1.4rem; }
+    a[role="button"] { margin-bottom: 0.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
