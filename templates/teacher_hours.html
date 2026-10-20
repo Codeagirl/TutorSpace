@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hours</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Tutoring Hours</h1>
+        {% set active_page = 'hours' %}
+        {% include '_teacher_nav.html' %}
+
+        <p>Hours from confirmed sessions only.</p>
+        <a href="/teacher/hours.csv" role="button" class="secondary">Download CSV</a>
+
+        <table>
+            <thead><tr><th>Name</th><th>Grade</th><th>Sessions</th><th>Hours</th></tr></thead>
+            <tbody>
+            {% for t in tutors %}
+                <tr>
+                    <td>{{ t.first_name }} {{ t.last_name }}{% if t.removed_at %} (removed){% endif %}</td>
+                    <td>{{ t.grade_level }}</td>
+                    <td>{{ t.session_count }}</td>
+                    <td>{{ "%.2f"|format(t.hours) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not tutors %}<p>No tutors yet.</p>{% endif %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sessions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Sessions</h1>
+        {% set active_page = 'sessions' %}
+        {% include '_teacher_nav.html' %}
+
+        <p>Every tutoring session at your school. Finished sessions can be corrected if something looks wrong.</p>
+
+        <form method="GET" action="/teacher/sessions">
+            <label for="status">Show</label>
+            <select name="status" id="status" onchange="this.form.submit()">
+                <option value="">All sessions</option>
+                {% for st in statuses %}
+                    <option value="{{ st }}" {% if st == status %}selected{% endif %}>{{ st.replace('_', ' ')|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <table>
+            <thead><tr><th>When</th><th>Subject</th><th>Tutor</th><th>Student</th><th>Status</th><th>Minutes</th><th>Confirmed</th><th></th></tr></thead>
+            <tbody>
+            {% for s in sessions %}
+                <tr>
+                    <td><time class="local" data-ts="{{ s.when_ts }}"></time></td>
+                    <td>{{ s.subject }}</td>
+                    <td>{{ s.tutor }}</td>
+                    <td>{{ s.student }}</td>
+                    <td>{{ s.status.replace('_', ' ')|capitalize }}</td>
+                    <td>{{ s.minutes if s.minutes is not none else '' }}</td>
+                    <td>{{ {'student': 'By student', 'auto': 'Automatically', 'teacher': 'By a teacher'}.get(s.confirmed_how, '') }}</td>
+                    <td>
+                        {% if s.status in ('awaiting_confirmation', 'completed') %}
+                            <a href="/teacher/sessions/{{ s.id }}/edit" role="button" class="secondary" style="margin:0; padding:0.3rem 1rem;">Edit</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not sessions %}<p>No sessions found.</p>{% endif %}
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

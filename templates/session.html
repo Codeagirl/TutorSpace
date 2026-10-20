@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+    {% if refresh %}<meta http-equiv="refresh" content="{{ refresh }}">{% endif %}
+</head>
+<body>
+    <main class="container">
+        <h1>{{ sess.subject }} Session</h1>
+        {% include '_flash.html' %}
+
+        <article>
+            <p><strong>{{ 'Student' if is_tutor else 'Tutor' }}:</strong> {{ sess.other_first }} (grade {{ sess.other_grade }})</p>
+            <p><strong>Where:</strong> {{ sess.location }}{% if sess.requires_supervision %} (staff will be present){% endif %}</p>
+            <p><strong>Free between:</strong>
+                <time class="local" data-ts="{{ sess.window_start }}"></time> to <time class="local" data-ts="{{ sess.window_end }}"></time></p>
+        </article>
+
+        {% if sess.status == 'scheduled' %}
+            {% if is_tutor %}
+                {% if sess.student_here_at %}
+                    <p><strong>{{ sess.other_first }} is here.</strong> Start the timer when you are ready.</p>
+                    <form method="POST" action="/sessions/{{ sess.id }}/start">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Start Timer</button></form>
+                {% else %}
+                    <p>Waiting for {{ sess.other_first }} to tap "I'm here". You can't start the timer until they do.</p>
+                {% endif %}
+            {% else %}
+                {% if sess.student_here_at %}
+                    <p><strong>You're checked in.</strong> Waiting for {{ sess.other_first }} to start the session.</p>
+                {% elif can_check_in %}
+                    <p>Tap the button when you've arrived.</p>
+                {% else %}
+                    <p>Check-in opens {{ lead }} minutes before your time window starts.</p>
+                {% endif %}
+            {% endif %}
+
+            {% if is_tutor or (can_check_in and not sess.student_here_at) %}
+            <form method="POST" action="/sessions/{{ sess.id }}/here">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="here_spot">Where exactly? (optional)</label>
+                <select name="detail_id" id="here_spot">
+                    <option value="">No details</option>
+                    {% for sp in spots %}<option value="{{ sp.id }}">{{ sp.text }}</option>{% endfor %}
+                </select>
+                <button type="submit" {% if is_tutor %}class="secondary"{% endif %}>I'm here</button>
+            </form>
+            {% endif %}
+        {% endif %}
+
+        {% if sess.status == 'in_progress' %}
+            <h2 id="display"
+                data-elapsed="{{ elapsed }}"
+                data-until-prompt="{{ until_prompt }}"
+                data-until-end="{{ until_end }}">00:00:00</h2>
+
+            {% if is_tutor %}
+                <form method="POST" action="/sessions/{{ sess.id }}/stop">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Stop</button></form>
+
+                <dialog id="checkDialog">
+                    <article>
+                        <h3>Still tutoring?</h3>
+                        <p>Click Continue to keep your session going. If you do not answer in
+                           <strong id="countdown">--:--</strong>, your session will end. Only the time up to this check is counted.</p>
+                        <footer>
+                            <form method="POST" action="/sessions/{{ sess.id }}/stop" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="secondary">End</button>
+                            </form>
+                            <form method="POST" action="/sessions/{{ sess.id }}/continue" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit">Continue</button>
+                            </form>
+                        </footer>
+                    </article>
+                </dialog>
+            {% else %}
+                <p>Your session is in progress. {{ sess.other_first }} will end it when you're finished.</p>
+            {% endif %}
+
+            <script>
+                const display = document.getElementById('display');
+                const baseElapsed = parseInt(display.dataset.elapsed);
+                const baseUntilPrompt = parseInt(display.dataset.untilPrompt);
+                const baseUntilEnd = parseInt(display.dataset.untilEnd);
+                const loadedAt = Date.now();
+                const dialog = document.getElementById('checkDialog');
+
+                function pad(n) { return String(n).padStart(2, '0'); }
+
+                function tick() {
+                    const passed = Math.floor((Date.now() - loadedAt) / 1000);
+                    const seconds = baseElapsed + passed;
+                    display.textContent =
+                        pad(Math.floor(seconds / 3600)) + ':' + pad(Math.floor((seconds % 3600) / 60)) + ':' + pad(seconds % 60);
+
+                    if (dialog) {
+                        if (baseUntilPrompt - passed <= 0 && !dialog.open) { dialog.showModal(); }
+                        const left = Math.max(0, baseUntilEnd - passed);
+                        document.getElementById('countdown').textContent = pad(Math.floor(left / 60)) + ':' + pad(left % 60);
+                    }
+                    if (baseUntilEnd - passed <= -3) { window.location.reload(); }
+                }
+                tick();
+                setInterval(tick, 1000);
+            </script>
+        {% endif %}
+
+        {% if sess.status == 'awaiting_confirmation' %}
+            {% if is_tutor %}
+                <p>Your session lasted about <strong>{{ minutes }} minutes</strong>. It will count toward your hours once {{ sess.other_first }} confirms it.</p>
+            {% else %}
+                <article>
+                    <header><strong>Please confirm your session</strong></header>
+                    <p>{{ sess.other_first }} says you worked together for about <strong>{{ minutes }} minutes</strong>. Is that right?</p>
+                    <form method="POST" action="/sessions/{{ sess.id }}/confirm">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Yes, that's right</button></form>
+                    <small>If you don't answer within {{ auto_days }} days, it will be confirmed automatically. If something is wrong, use "Report a problem" below and a teacher will sort it out.</small>
+                </article>
+            {% endif %}
+        {% endif %}
+
+        {% if sess.status == 'completed' %}
+            <p><strong>Completed.</strong> {{ sess.counted_minutes }} minutes were counted
+                {% if sess.confirmed_how == 'auto' %}(confirmed automatically){% elif sess.confirmed_how == 'teacher' %}(confirmed by a teacher){% endif %}.</p>
+        {% endif %}
+        {% if sess.status == 'cancelled' %}
+            <p><strong>This session was cancelled.</strong></p>
+        {% endif %}
+
+        {% if sess.status in ('scheduled', 'in_progress') %}
+            <h4>Quick message</h4>
+            <form method="POST" action="/sessions/{{ sess.id }}/message">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="preset_id" required>
+                    <option value="" disabled selected>Choose a message</option>
+                    {% for p in presets %}<option value="{{ p.id }}">{{ p.text }}</option>{% endfor %}
+                </select>
+                <select name="detail_id">
+                    <option value="">No details</option>
+                    {% for sp in spots %}<option value="{{ sp.id }}">{{ sp.text }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="secondary">Send</button>
+            </form>
+        {% endif %}
+
+        {% if messages %}
+            <h4>Messages</h4>
+            <table>
+                <tbody>
+                {% for m in messages %}
+                    <tr>
+                        <td><strong>{{ 'You' if m.sender_user_id == me else m.first_name }}</strong></td>
+                        <td>{{ m.text }}{% if m.detail %} ({{ m.detail }}){% endif %}</td>
+                        <td><time class="local" data-ts="{{ m.created_at }}"></time></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {% if sess.status == 'scheduled' %}
+            <form method="POST" action="/sessions/{{ sess.id }}/cancel"
+                  onsubmit="return confirm('Cancel this session?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="secondary outline">Cancel session</button>
+            </form>
+        {% endif %}
+
+        <details>
+            <summary>Report a problem</summary>
+            <p>This goes to the teachers at your school, not to the other student.</p>
+            <form method="POST" action="/sessions/{{ sess.id }}/report">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="text" name="reason" maxlength="300" required placeholder="What went wrong?">
+                <button type="submit" class="secondary">Send report</button>
+            </form>
+        </details>
+
+        <a href="/dashboard" role="button" class="secondary">Back</a>
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

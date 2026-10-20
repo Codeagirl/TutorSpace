@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Session</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Edit Session</h1>
+        {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+
+        <article>
+            <p><strong>{{ s.subject }}</strong></p>
+            <p><strong>Tutor:</strong> {{ s.tutor }}</p>
+            <p><strong>Student:</strong> {{ s.student }}</p>
+            <p><strong>Measured by the timer:</strong> {{ measured }} minutes</p>
+            <p><strong>Currently counted:</strong>
+                {% if s.status == 'completed' %}{{ current }} minutes{% else %}Not counted yet (waiting for the student){% endif %}</p>
+        </article>
+
+        <form method="POST" action="/teacher/sessions/{{ s.id }}/edit">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="minutes">Minutes to count</label>
+            <input type="number" name="minutes" id="minutes" min="0" max="{{ max_minutes }}" step="0.01" required value="{{ request.form.get('minutes', current) }}">
+            <small>Use 0 to count nothing for this session.</small>
+
+            <label for="reason">Reason (saved in the activity log)</label>
+            <input type="text" name="reason" id="reason" maxlength="200" required value="{{ request.form.get('reason', '') }}">
+
+            {% if s.status == 'awaiting_confirmation' %}
+                <small>Saving will confirm this session on the student's behalf.</small>
+            {% endif %}
+            <button type="submit">Save</button>
+            <a href="/teacher/sessions" role="button" class="secondary">Cancel</a>
+        </form>
+
+        {% if history %}
+            <h4>Edit history</h4>
+            <table>
+                <thead><tr><th>When</th><th>Teacher</th><th>Change</th><th>Reason</th></tr></thead>
+                <tbody>
+                {% for h in history %}
+                    <tr>
+                        <td><time class="local" data-ts="{{ h.edited_at }}"></time></td>
+                        <td>{{ h.username }}</td>
+                        <td>{{ h.field.replace('_', ' ')|capitalize }}: {{ h.old_value }} to {{ h.new_value }}</td>
+                        <td>{{ h.reason }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

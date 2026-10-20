@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ site_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>{{ site_name }}</h1>
+        <p>Log in to ask for help or to tutor other students at your school.</p>
+
+        <a href="/login" role="button">Log In</a>
+        <a href="/sign_up" role="button" class="secondary">Sign Up</a>
+    </main>
+</body>
+</html>

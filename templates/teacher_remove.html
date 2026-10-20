@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Remove Student</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Remove Student</h1>
+        {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+        <p>You are about to remove <strong>{{ label }}</strong>.</p>
+        <article>
+            <ul>
+                <li>They will be logged out and will not be able to log in.</li>
+                <li>They will no longer appear to other students or on approval lists.</li>
+                <li>Their past tutoring hours and records are kept.</li>
+                <li>You can restore them at any time from the Students page.</li>
+            </ul>
+        </article>
+        <form method="POST" action="/teacher/students/{{ member.id }}/remove">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="reason">Reason (saved in the activity log)</label>
+            <input type="text" name="reason" id="reason" maxlength="200" required>
+            <button type="submit">Remove student</button>
+            <a href="/teacher/students" role="button" class="secondary">Cancel</a>
+        </form>
+    </main>
+</body>
+</html>

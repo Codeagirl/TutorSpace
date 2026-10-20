@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        {% include '_flash.html' %}
+
+        {% if user.role == 'member' %}
+            <h1>Welcome, {{ user.first_name }}</h1>
+            <article>
+                <p><strong>School:</strong> {{ user.school_name }}</p>
+                <p><strong>Grade:</strong> {{ user.grade_level }}</p>
+            </article>
+
+            {% for n in cancelled_notices %}
+            <article>
+                <p><strong>{% if n.canceller %}{{ n.canceller }} cancelled{% else %}A teacher cancelled{% endif %}
+                   your {{ n.subject }} session.</strong>
+                   If you asked for the help, your request is back on the board.</p>
+            </article>
+            {% endfor %}
+
+            {% for r in my_requests if r.session_status == 'awaiting_confirmation' and r.tutor_first %}
+            <article>
+                <header><strong>Please confirm your session</strong></header>
+                <p>Your {{ r.subject }} session with {{ r.tutor_first }} has ended and needs your confirmation. If you don't confirm it within {{ auto_days }} days, it will be confirmed automatically.</p>
+                <a href="/sessions/{{ r.session_id }}" role="button">Confirm</a>
+            </article>
+            {% endfor %}
+
+            {% for r in passed %}
+            <article>
+                <header><strong>Your time window has passed</strong></header>
+                <p>Your request for <strong>{{ r.subject }}</strong> at {{ r.location }} ended
+                   <time class="local" data-ts="{{ r.window_end }}"></time>. Tutors can't see it anymore.
+                   Extend it to put it back on the board, or remove it.</p>
+                <form method="POST" action="/requests/{{ r.id }}/extend" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="extend_{{ r.id }}">New end time</label>
+                    <input type="datetime-local" id="extend_{{ r.id }}" data-epoch="end_ts" required>
+                    <input type="hidden" name="end_ts">
+                    <button type="submit">Extend</button>
+                </form>
+                <form method="POST" action="/requests/{{ r.id }}/cancel" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="secondary">Remove</button>
+                </form>
+            </article>
+            {% endfor %}
+
+            <h4>Get help</h4>
+            <a href="/requests/new" role="button">Request a Tutor</a>
+
+            {% if my_requests %}
+                <table>
+                    <thead><tr><th>Subject</th><th>Free between</th><th>Where</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    {% for r in my_requests %}
+                        <tr>
+                            <td>{{ r.subject }}</td>
+                            <td><time class="local" data-ts="{{ r.window_start }}"></time> to <time class="local" data-ts="{{ r.window_end }}"></time></td>
+                            <td>{{ r.location }}</td>
+                            <td>{% if r.status == 'open' %}Waiting for a tutor{% else %}Tutor: {{ r.tutor_first }} (grade {{ r.tutor_grade }})
+                                <br><small>{{ {'scheduled': 'Scheduled', 'in_progress': 'In progress', 'awaiting_confirmation': 'Needs your confirmation'}[r.session_status] }}</small>{% endif %}</td>
+                            <td>
+                                {% if r.status == 'open' %}
+                                <form method="POST" action="/requests/{{ r.id }}/cancel" style="margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="secondary" style="margin:0; padding:0.3rem 1rem;">Cancel</button>
+                                </form>
+                                {% else %}
+                                <a href="/sessions/{{ r.session_id }}" role="button" style="margin:0; padding:0.3rem 1rem;">Open</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            {% if can_tutor %}
+                <h4>Tutor</h4>
+                <a href="/requests" role="button">Open Requests{% if board_count %} ({{ board_count }}){% endif %}</a>
+                <p><strong>Hours logged:</strong> {{ "%.2f"|format(hours) }}</p>
+            {% endif %}
+
+            {% if my_sessions %}
+                <h4>Your tutoring sessions</h4>
+                <table>
+                    <thead><tr><th>Subject</th><th>Student</th><th>Free between</th><th>Where</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    {% for s in my_sessions %}
+                        <tr>
+                            <td>{{ s.subject }}</td>
+                            <td>{{ s.student_first }} (grade {{ s.student_grade }})</td>
+                            <td><time class="local" data-ts="{{ s.window_start }}"></time> to <time class="local" data-ts="{{ s.window_end }}"></time></td>
+                            <td>{{ s.location }}</td>
+                            <td>{{ {'scheduled': 'Scheduled', 'in_progress': 'In progress', 'awaiting_confirmation': 'Waiting for student to confirm'}[s.status] }}</td>
+                            <td><a href="/sessions/{{ s.id }}" role="button" style="margin:0; padding:0.3rem 1rem;">Open</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            {% if tutor_rows %}
+                <h4>Your tutoring subjects</h4>
+                <table>
+                    <thead><tr><th>Subject</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for row in tutor_rows %}
+                        <tr>
+                            <td>{{ row.label }}</td>
+                            <td>{{ {'pending': 'Waiting for teacher approval', 'approved': 'Approved', 'denied': 'Not approved'}[row.status] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% else %}
+            <h1>Welcome, {{ user.username }}</h1>
+            <article>
+                <p><strong>Role:</strong> {{ user.role|capitalize }}</p>
+                {% if user.school_name %}<p><strong>School:</strong> {{ user.school_name }}</p>{% endif %}
+            </article>
+            {% if user.role == 'teacher' %}
+                <h4>Teacher tools</h4>
+                <a href="/teacher/tutors" role="button">Tutor Approvals{% if pending_count %} ({{ pending_count }} waiting){% endif %}</a>
+                <a href="/teacher/students" role="button">Students</a>
+                <a href="/teacher/locations" role="button">Meeting Locations</a>
+                <a href="/teacher/sessions" role="button">Sessions{% if unconfirmed_count %} ({{ unconfirmed_count }} unconfirmed){% endif %}</a>
+                <a href="/teacher/hours" role="button">Hours</a>
+                <a href="/teacher/reports" role="button">Reports{% if open_reports %} ({{ open_reports }} open){% endif %}</a>
+                <a href="/teacher/activity" role="button">Activity Log</a>
+            {% endif %}
+        {% endif %}
+
+        <a href="/change_password" role="button" class="secondary">Change Password</a>
+        <a href="/logout" role="button" class="secondary outline">Log Out</a>
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

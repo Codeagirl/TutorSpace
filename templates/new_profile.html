@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Your Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Create Your Profile</h1>
+
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/profile/new">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="first_name">First name</label>
+            <input type="text" name="first_name" id="first_name" value="{{ form.get('first_name', '') }}" required maxlength="50">
+
+            <label for="last_name">Last name</label>
+            <input type="text" name="last_name" id="last_name" value="{{ form.get('last_name', '') }}" required maxlength="50">
+            <small>Only teachers can see your last name.</small>
+
+            <label for="grade_level">Grade</label>
+            <select id="grade_level" name="grade_level" required>
+                <option value="" disabled {% if not form.get('grade_level') %}selected{% endif %}>Select a grade</option>
+                {% for g in range(min_grade, max_grade + 1) %}
+                    <option value="{{ g }}" {% if form.get('grade_level') == g|string %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+            </select>
+
+            <div id="tutor_section">
+                <h3>Want to tutor? (optional)</h3>
+                <p>Pick the classes you could help with. A teacher will review your choices before you can accept requests.
+                   Skip this section if you only want to get help.</p>
+
+                {% for group, subjects in groups.items() %}
+                <fieldset>
+                    <legend>{{ group }}</legend>
+                    {% for code, label in subjects %}
+                        <label><input type="checkbox" name="subjects" value="{{ code }}" {% if code in selected %}checked{% endif %}>{{ label }}</label>
+                    {% endfor %}
+                </fieldset>
+                {% endfor %}
+            </div>
+
+            <button type="submit">Create</button>
+        </form>
+    </main>
+
+    <script>
+        const minTutorGrade = {{ min_tutor_grade }};
+        const gradeSelect = document.getElementById('grade_level');
+        const tutorSection = document.getElementById('tutor_section');
+        function updateTutorSection() {
+            tutorSection.hidden = !(parseInt(gradeSelect.value) >= minTutorGrade);
+            if (tutorSection.hidden) {
+                tutorSection.querySelectorAll('input[type=checkbox]').forEach(box => box.checked = false);
+            }
+        }
+        gradeSelect.addEventListener('change', updateTutorSection);
+        updateTutorSection();
+    </script>
+</body>
+</html>

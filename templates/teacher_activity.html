@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Activity Log</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Activity Log</h1>
+        {% set active_page = 'activity' %}
+        {% include '_teacher_nav.html' %}
+        <p>Every change made by a teacher at your school, newest first.</p>
+
+        <table>
+            <thead><tr><th>When</th><th>Teacher</th><th>Action</th><th>About</th><th>Details</th></tr></thead>
+            <tbody>
+            {% for r in rows %}
+                <tr>
+                    <td><time class="local" data-ts="{{ r.created_at }}"></time></td>
+                    <td>{{ r.actor }}</td>
+                    <td>{{ labels.get(r.action, r.action) }}</td>
+                    <td>{{ r.target_label or '' }}</td>
+                    <td>{{ r.details or '' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not rows %}<p>Nothing has been logged yet.</p>{% endif %}
+
+        {% if page > 1 %}<a href="/teacher/activity?page={{ page - 1 }}" role="button" class="secondary">Newer</a>{% endif %}
+        {% if has_next %}<a href="/teacher/activity?page={{ page + 1 }}" role="button" class="secondary">Older</a>{% endif %}
+    </main>
+
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meeting Locations</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Meeting Locations</h1>
+        {% set active_page = 'locations' %}
+        {% include '_teacher_nav.html' %}
+
+        <p>Students can only pick from this list when they request tutoring. Turn a location off to hide it without deleting it.</p>
+
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+
+        <article>
+            <header><strong>Add a location</strong></header>
+            <form method="POST" action="/teacher/locations">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" maxlength="80" required value="{{ form.get('name', '') }}"
+                       placeholder="e.g. Main Street Public Library">
+
+                <label for="kind">Type</label>
+                <select name="kind" id="kind" required>
+                    <option value="" disabled selected>Select a type</option>
+                    {% for code, label in kinds.items() %}
+                        <option value="{{ code }}" {% if form.get('kind') == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>
+                    <input type="checkbox" name="requires_supervision" {% if form.get('requires_supervision') %}checked{% endif %}>
+                    A teacher or staff member must be present
+                </label>
+                <button type="submit">Add</button>
+            </form>
+        </article>
+
+        <table>
+            <thead><tr><th>Name</th><th>Type</th><th>Supervised</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for loc in locations %}
+                <tr>
+                    <td>{{ loc.name }}</td>
+                    <td>{{ kinds.get(loc.kind, loc.kind) }}</td>
+                    <td>
+                        <form method="POST" action="/teacher/locations/{{ loc.id }}/toggle" style="margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="field" value="requires_supervision">
+                            <button type="submit" class="secondary" style="margin:0; padding:0.3rem 1rem;">{{ 'Yes' if loc.requires_supervision else 'No' }}</button>
+                        </form>
+                    </td>
+                    <td>{{ 'Active' if loc.active else 'Hidden' }}</td>
+                    <td>
+                        <form method="POST" action="/teacher/locations/{{ loc.id }}/toggle" style="margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="field" value="active">
+                            <button type="submit" class="secondary" style="margin:0; padding:0.3rem 1rem;">{{ 'Hide' if loc.active else 'Show' }}</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not locations %}<p>No locations yet. Add your first one above.</p>{% endif %}
+    </main>
+</body>
+</html>

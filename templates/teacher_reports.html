@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Reports</h1>
+        {% set active_page = 'reports' %}
+        {% include '_teacher_nav.html' %}
+        <p>Problems students and tutors reported from a session. Open ones are listed first.</p>
+
+        <table>
+            <thead><tr><th>When</th><th>Session</th><th>Reported by</th><th>What they said</th><th></th></tr></thead>
+            <tbody>
+            {% for r in reports %}
+                <tr>
+                    <td><time class="local" data-ts="{{ r.created_at }}"></time></td>
+                    <td>{{ r.subject }}<br><small>Tutor: {{ r.tutor }}<br>Student: {{ r.student }}</small></td>
+                    <td>{{ r.reporter }}</td>
+                    <td>{{ r.reason }}</td>
+                    <td>
+                        {% if r.status == 'open' %}
+                        <form method="POST" action="/teacher/reports/{{ r.id }}/reviewed" style="margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" style="margin:0; padding:0.3rem 1rem;">Mark reviewed</button>
+                        </form>
+                        {% else %}Reviewed{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not reports %}<p>No reports.</p>{% endif %}
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

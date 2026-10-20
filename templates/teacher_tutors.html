@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tutor Approvals</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Tutor Approvals</h1>
+        {% set active_page = 'tutors' %}
+        {% include '_teacher_nav.html' %}
+
+        <p>Students choose the subjects they'd like to tutor. They can only accept requests for subjects you approve.</p>
+
+        {% for person in people %}
+        <article>
+            <header>
+                <strong>{{ person.first }} {{ person.last }}</strong> &middot; Grade {{ person.grade }}
+                {% if person.pending %}
+                    <form method="POST" action="/teacher/tutors/review" style="display:inline; float:right; margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="user_id" value="{{ person.user_id }}">
+                        <input type="hidden" name="subject_code" value="__all_pending__">
+                        <input type="hidden" name="decision" value="approved">
+                        <button type="submit" style="margin:0; padding:0.3rem 1rem;">Approve all pending ({{ person.pending }})</button>
+                    </form>
+                {% endif %}
+            </header>
+            <table>
+                <thead><tr><th>Subject</th><th>Status</th><th>Change</th></tr></thead>
+                <tbody>
+                {% for s in person.subjects %}
+                    <tr>
+                        <td>{{ s.label }}</td>
+                        <td>{{ {'pending': 'Waiting', 'approved': 'Approved', 'denied': 'Denied'}[s.status] }}</td>
+                        <td>
+                            {% for decision, text in [('approved', 'Approve'), ('denied', 'Deny')] %}
+                                {% if s.status != decision %}
+                                <form method="POST" action="/teacher/tutors/review" style="display:inline; margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="user_id" value="{{ person.user_id }}">
+                                    <input type="hidden" name="subject_code" value="{{ s.subject_code }}">
+                                    <input type="hidden" name="decision" value="{{ decision }}">
+                                    <button type="submit" {% if decision == 'denied' %}class="secondary"{% endif %}
+                                            style="margin:0; padding:0.3rem 1rem;">{{ text }}</button>
+                                </form>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </article>
+        {% else %}
+            <p>No one at your school has asked to tutor yet.</p>
+        {% endfor %}
+    </main>
+</body>
+</html>

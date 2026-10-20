@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Create an Account</h1>
+
+        {% if error %}
+            <p style="color:red;">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="/sign_up">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="join_code">School code</label>
+            <input type="text" name="join_code" id="join_code" value="{{ join_code or '' }}" required autocomplete="off">
+            <small>Your teacher will give you this code.</small>
+
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" value="{{ username or '' }}" required minlength="3" maxlength="30">
+            <small>Please don't use your real name.</small>
+
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
+            <small>At least 6 characters, with 1 uppercase letter and 1 number.</small>
+
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <p>Already have an account? <a href="/login">Log in here</a></p>
+    </main>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Request a Tutor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Request a Tutor</h1>
+        {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+
+        {% if not locations %}
+            <p>Your teacher hasn't added any meeting locations yet, so requests can't be made. Please check back soon.</p>
+        {% else %}
+        <p>Tell approved tutors at your school what you need help with, when, and where. You can have up to {{ max_open }} requests waiting at a time.</p>
+
+        <form method="POST" action="/requests/new">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="subject">Subject</label>
+            <select name="subject" id="subject" required>
+                <option value="" disabled {% if not form.get('subject') %}selected{% endif %}>Select a subject</option>
+                {% for group, subjects in groups.items() %}
+                    <optgroup label="{{ group }}">
+                        {% for code, label in subjects %}
+                            <option value="{{ code }}" {% if form.get('subject') == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+
+            <label for="location_id">Where would you like to meet?</label>
+            <select name="location_id" id="location_id" required>
+                <option value="" disabled {% if not form.get('location_id') %}selected{% endif %}>Select a location</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if form.get('location_id') == loc.id|string %}selected{% endif %}>
+                        {{ loc.name }}{% if loc.requires_supervision %} (staff present){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label for="start_local">I'm free from</label>
+            <input type="datetime-local" id="start_local" name="start_local" data-epoch="start_ts" required value="{{ form.get('start_local', '') }}">
+
+            <label for="end_local">Until</label>
+            <input type="datetime-local" id="end_local" name="end_local" data-epoch="end_ts" required value="{{ form.get('end_local', '') }}">
+            <small>A tutor will pick a time inside this window.</small>
+
+            <input type="hidden" name="start_ts">
+            <input type="hidden" name="end_ts">
+            <button type="submit">Post Request</button>
+        </form>
+        {% endif %}
+
+        <a href="/dashboard" role="button" class="secondary">Back</a>
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Open Requests</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Open Requests</h1>
+        {% include '_flash.html' %}
+
+        {% if not approved %}
+            <p>You don't have any approved tutoring subjects yet. Once a teacher approves a subject, requests for it will show up here.</p>
+        {% else %}
+            <p>Students at your school who need help with a subject you're approved for.</p>
+
+            <form method="GET" action="/requests">
+                <label for="subject">Subject</label>
+                <select name="subject" id="subject" onchange="this.form.submit()">
+                    <option value="">All my subjects</option>
+                    {% for a in approved %}
+                        <option value="{{ a.subject_code }}" {% if a.subject_code == selected %}selected{% endif %}>{{ a.label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <table>
+                <thead><tr><th>Subject</th><th>Student</th><th>Free between</th><th>Where</th><th></th></tr></thead>
+                <tbody>
+                {% for r in rows %}
+                    <tr>
+                        <td>{{ r.subject }}</td>
+                        <td>{{ r.first_name }} (grade {{ r.grade_level }})</td>
+                        <td><time class="local" data-ts="{{ r.window_start }}"></time> to <time class="local" data-ts="{{ r.window_end }}"></time></td>
+                        <td>{{ r.location }}{% if r.requires_supervision %}<br><small>Staff present</small>{% endif %}</td>
+                        <td>
+                            <form method="POST" action="/requests/{{ r.id }}/accept" style="margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" style="margin:0; padding:0.3rem 1rem;">Accept</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% if not rows %}<p>No open requests right now. Check back later.</p>{% endif %}
+        {% endif %}
+
+        <a href="/dashboard" role="button" class="secondary">Back</a>
+    </main>
+    <script src="{{ url_for('static', filename='local_time.js') }}"></script>
+</body>
+</html>

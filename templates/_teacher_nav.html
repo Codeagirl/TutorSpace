@@ -1,0 +1,14 @@
+<nav>
+    <a href="/dashboard" role="button" class="secondary">Home</a>
+    <a href="/teacher/tutors" role="button" {% if active_page != 'tutors' %}class="secondary"{% endif %}>Tutor Approvals</a>
+    <a href="/teacher/students" role="button" {% if active_page != 'students' %}class="secondary"{% endif %}>Students</a>
+    <a href="/teacher/locations" role="button" {% if active_page != 'locations' %}class="secondary"{% endif %}>Locations</a>
+    <a href="/teacher/sessions" role="button" {% if active_page != 'sessions' %}class="secondary"{% endif %}>Sessions</a>
+    <a href="/teacher/hours" role="button" {% if active_page != 'hours' %}class="secondary"{% endif %}>Hours</a>
+    <a href="/teacher/reports" role="button" {% if active_page != 'reports' %}class="secondary"{% endif %}>Reports</a>
+    <a href="/teacher/activity" role="button" {% if active_page != 'activity' %}class="secondary"{% endif %}>Activity Log</a>
+    <a href="/logout" role="button" class="secondary outline">Log Out</a>
+</nav>
+{% for msg in get_flashed_messages() %}
+    <p><strong>{{ msg }}</strong></p>
+{% endfor %}

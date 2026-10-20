@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Students</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+    <main class="container">
+        <h1>Students</h1>
+        {% set active_page = 'students' %}
+        {% include '_teacher_nav.html' %}
+
+        <form method="GET" action="/teacher/students" role="search">
+            <input type="search" name="q" value="{{ q }}" placeholder="Search by name or username">
+            <button type="submit">Search</button>
+        </form>
+
+        <table>
+            <thead><tr><th>Name</th><th>Username</th><th>Grade</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for s in students %}
+                <tr>
+                    <td>{% if s.first_name %}{{ s.first_name }} {{ s.last_name }}{% else %}<em>No profile yet</em>{% endif %}</td>
+                    <td>{{ s.username }}</td>
+                    <td>{{ s.grade_level or '' }}</td>
+                    <td>
+                        {% if s.removed_at %}Removed
+                        {% elif s.must_change_password %}Must choose new password
+                        {% else %}Active{% endif %}
+                    </td>
+                    <td>
+                        {% if s.removed_at %}
+                            <form method="POST" action="/teacher/students/{{ s.id }}/restore" style="display:inline; margin:0;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" style="margin:0; padding:0.3rem 1rem;">Restore</button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="/teacher/students/{{ s.id }}/reset_password" style="display:inline; margin:0;"
+                                  onsubmit="return confirm('Reset the password for {{ s.username }}? They will be logged out everywhere.');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="secondary" style="margin:0; padding:0.3rem 1rem;">Reset password</button>
+                            </form>
+                            <a href="/teacher/students/{{ s.id }}/remove" role="button" class="secondary outline"
+                               style="margin:0; padding:0.3rem 1rem;">Remove</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not students %}<p>No students found.</p>{% endif %}
+    </main>
+</body>
+</html>
